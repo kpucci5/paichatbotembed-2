@@ -13,7 +13,9 @@ document.addEventListener('DOMContentLoaded', function() {
         messageIconColor: '#6656FF',
         startChatButtonColor: '#6656FF',
         initiatorPosition: 'bottom-right',
-        initialQuestion: 'Hi how are you today?'
+        initialQuestion: 'Hi how are you today?',
+        requireEmail: false,  // Set to false to disable email form or true to enable
+        defaultUserEmail: 'anonymous@user.com'  // Used when requireEmail is false
     });
 });
 </script>
@@ -36,7 +38,9 @@ document.addEventListener('DOMContentLoaded', function() {
             startChatButtonColor: config.startChatButtonColor || '#6656FF',
             userMessageColor: config.userMessageColor || '#6656FF',
             initiatorPosition: config.initiatorPosition || 'bottom-right',
-            initialQuestion: config.initialQuestion
+            initialQuestion: config.initialQuestion,
+            requireEmail: config.requireEmail !== undefined ? config.requireEmail : true,
+            defaultUserEmail: config.defaultUserEmail || 'anonymous@user.com'
         };
 
         let positionCSS;
@@ -159,18 +163,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
             .pai-chat-message-icon.fade-in {
                 opacity: 1;
-            }
-
-            .pai-chat-message-icon.expanded {
-                transform: scale(2.5);
-                cursor: pointer;
-                position: fixed;
-                ${positionCSS}
-                margin: 10px;
-                opacity: 1;
-                background: none;
-                box-shadow: none;
-                padding: 0;
             }
 
             .pai-chat-message-icon svg {
@@ -481,7 +473,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 padding: 15px;
                 min-height: 60px;
                 background: #fff;
-                border-top: 1px solid #EFF0F6;
+border-top: 1px solid #EFF0F6;
                 margin-top: auto;
             }
 
@@ -585,7 +577,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             
                 .pai-chat-initiator {
-                    display: flex !important; /* Change from none to flex */
+                    display: flex !important;
                     flex-direction: row;
                     align-items: center;
                     bottom: 20px !important;
@@ -622,7 +614,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     margin: 0 !important;
                     padding: 0 !important;
                 }
-            
             
                 .pai-chat-avatar-wrapper {
                     margin-right: 10px;
@@ -750,7 +741,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     margin-top: 8px;
                 }
             
-                /* Ensure the overlay covers the entire screen on mobile */
                 .pai-email-overlay {
                     position: fixed;
                     top: 0;
@@ -763,7 +753,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
-            /* Add a new breakpoint for tablets */
             @media (min-width: 481px) and (max-width: 768px) {
                 .pai-chat-window {
                     width: 340px;
@@ -804,7 +793,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
                 <div class="pai-chat-window">
-                    <div class="pai-email-overlay">
+                    <div class="pai-email-overlay" style="${!config.requireEmail ? 'display: none !important;' : ''}">
                         <div class="pai-email-form">
                             <button class="pai-chat-close">&times;</button>
                             <h3>Before we start chatting</h3>
@@ -861,22 +850,25 @@ document.addEventListener('DOMContentLoaded', function() {
         let sessionId = localStorage.getItem('pai-chat-session');
         let initialMessageSent = false;
 
-        // Check for existing session
+        // Check for existing session or set default if email not required
         if (sessionId) {
             userEmail = sessionId;
+            chatInput.disabled = false;
+            sendButton.disabled = false;
+            emailOverlay.style.display = 'none';
+        } else if (!config.requireEmail) {
+            userEmail = config.defaultUserEmail;
+            sessionId = config.defaultUserEmail;
+            localStorage.setItem('pai-chat-session', config.defaultUserEmail);
             chatInput.disabled = false;
             sendButton.disabled = false;
             emailOverlay.style.display = 'none';
         }
 
         function showMessageIcon() {
-            // First remove the initiator completely
             chatInitiator.style.display = 'none';
-        
-            // Get the message icon and ensure it's independent of the initiator
             messageIcon.style.position = 'fixed';
             
-            // Force the message icon to be visible and properly positioned
             messageIcon.style.cssText = `
                 display: flex !important;
                 opacity: 1 !important;
@@ -893,10 +885,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 height: 24px !important;
             `;
         
-            // Ensure the icon is visible and expanded
             messageIcon.classList.add('expanded');
-            
-            // Move the icon out of the bubble wrapper to avoid inheritance issues
             document.body.appendChild(messageIcon);
         }
 
@@ -909,7 +898,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         }
 
-        function typeMessage(targetElement, message, callback) {
+function typeMessage(targetElement, message, callback) {
             let index = 0;
             targetElement.textContent = '';
             function typeChar() {
@@ -1042,7 +1031,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const data = await response.json();
                     
                     if (data.ai_message) {
-                        aiMessageElement.querySelector('.pai-chat-message-text').innerHTML = data.ai_message;
+                        aiMessageElement.querySelector('.pai-chat-message-text').innerHTML = processMessage(data.ai_message);
                     } else {
                         aiMessageElement.querySelector('.pai-chat-message-text').textContent = 
                             "Sorry, I couldn't generate a response at this time.";
@@ -1060,15 +1049,28 @@ document.addEventListener('DOMContentLoaded', function() {
         // Event Listeners
         chatInitiator.addEventListener('click', function() {
             this.style.display = 'none';
+            chatWindow.style.display = 'flex';
             
-            if (!userEmail) {
+            if (!userEmail && config.requireEmail) {
                 emailOverlay.style.display = 'flex';
-                chatWindow.style.display = 'flex';
-                // Remove this line: showMessageIcon();
             } else {
-                chatWindow.style.display = 'flex';
-                // Remove this line: showMessageIcon();
                 if (!initialMessageSent) {
+                    addAIMessage(config.initialQuestion || `Hi, I'm ${config.chatbotName}, how can I help you?`);
+                    initialMessageSent = true;
+                }
+            }
+        });
+
+        messageIcon.addEventListener('click', function(event) {
+            event.stopPropagation();
+            if (this.classList.contains('expanded')) {
+                this.style.opacity = '0';
+                this.classList.remove('expanded');
+                chatWindow.style.display = 'flex';
+                
+                if (!userEmail && config.requireEmail) {
+                    emailOverlay.style.display = 'flex';
+                } else if (!initialMessageSent) {
                     addAIMessage(config.initialQuestion || `Hi, I'm ${config.chatbotName}, how can I help you?`);
                     initialMessageSent = true;
                 }
@@ -1077,7 +1079,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         mainChatClose.addEventListener('click', () => {
             chatWindow.style.display = 'none';
-            // Small delay to ensure proper transition
             setTimeout(() => {
                 showMessageIcon();
             }, 50);
@@ -1103,25 +1104,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 initiator.querySelector('.pai-chat-bubble').style.display = 'none';
                 showMessageIcon();
             }, 300);
-        });
-
-        messageIcon.addEventListener('click', function(event) {
-            event.stopPropagation();
-            if (this.classList.contains('expanded')) {
-                this.style.opacity = '0';
-                this.classList.remove('expanded');
-                
-                if (!userEmail) {
-                    emailOverlay.style.display = 'flex';
-                    chatWindow.style.display = 'flex';
-                } else {
-                    chatWindow.style.display = 'flex';
-                    if (!initialMessageSent) {
-                        addAIMessage(config.initialQuestion || `Hi, I'm ${config.chatbotName}, how can I help you?`);
-                        initialMessageSent = true;
-                    }
-                }
-            }
         });
 
         fullscreenToggle.addEventListener('click', function() {
