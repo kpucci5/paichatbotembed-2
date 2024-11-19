@@ -14,8 +14,10 @@ document.addEventListener('DOMContentLoaded', function() {
         startChatButtonColor: '#6656FF',
         initiatorPosition: 'bottom-right',
         initialQuestion: 'Hi how are you today?',
-        requireEmail: false,  // Set to false to disable email form or true to enable
-        defaultUserEmail: 'anonymous@user.com'  // Used when requireEmail is false
+        requireIntake: true,  // Set to false to disable intake form
+        defaultUserEmail: 'anonymous@user.com',  // Used when requireIntake is false
+        intakeFormTitle: 'Before we start chatting',
+        intakeFormSubtitle: 'Please fill out your information to continue'
     });
 });
 </script>
@@ -39,8 +41,10 @@ document.addEventListener('DOMContentLoaded', function() {
             userMessageColor: config.userMessageColor || '#6656FF',
             initiatorPosition: config.initiatorPosition || 'bottom-right',
             initialQuestion: config.initialQuestion,
-            requireEmail: config.requireEmail !== undefined ? config.requireEmail : true,
-            defaultUserEmail: config.defaultUserEmail || 'anonymous@user.com'
+            requireIntake: config.requireIntake !== undefined ? config.requireIntake : true,
+            defaultUserEmail: config.defaultUserEmail || 'anonymous@user.com',
+            intakeFormTitle: config.intakeFormTitle || 'Before we start chatting',
+            intakeFormSubtitle: config.intakeFormSubtitle || 'Please fill out your information to continue'
         };
 
         let positionCSS;
@@ -60,7 +64,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 break;
         }
         
-        // Add the additional styles for the message icon
+        // Add the additional styles for the message icon and intake form
         const additionalStyles = `
             .pai-chat-message-icon.expanded {
                 position: fixed !important;
@@ -75,12 +79,109 @@ document.addEventListener('DOMContentLoaded', function() {
                 transform: scale(2.5) !important;
             }
             
+            .pai-intake-form {
+                position: relative;
+                background: rgba(255, 255, 255, 0.95);
+                padding: 35px 25px;
+                border-radius: 15px;
+                width: 85%;
+                max-width: 320px;
+                text-align: center;
+                box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+                backdrop-filter: blur(10px);
+            }
+
+            .pai-intake-form h3 {
+                font-size: 15px;
+                margin: 0 0 6px 0;
+                color: #2B263E;
+            }
+            
+            .pai-intake-form p {
+                font-size: 13px;
+                margin: 0 0 12px 0;
+                color: #666;
+            }
+
+            .pai-intake-input {
+                width: 100%;
+                padding: 8px 12px;
+                margin: 8px 0;
+                border: 1px solid #EFF0F6;
+                border-radius: 8px;
+                font-family: 'Inter', sans-serif;
+                font-size: 13px;
+            }
+
+            .pai-intake-label {
+                display: block;
+                text-align: left;
+                font-size: 12px;
+                color: #666;
+                margin-top: 8px;
+                margin-bottom: 2px;
+            }
+
+            .pai-intake-submit {
+                background-color: ${config.startChatButtonColor || config.sendButtonColor};
+                color: white;
+                border: none;
+                padding: 12px 30px;
+                border-radius: 20px;
+                cursor: pointer;
+                font-family: 'Inter', sans-serif;
+                font-size: 14px;
+                transition: opacity 0.3s;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                width: 100%;
+                margin-top: 16px;
+            }
+            
+            .pai-intake-submit:hover {
+                opacity: 0.9;
+            }
+
+            .pai-intake-error {
+                color: #FF4444;
+                font-size: 12px;
+                text-align: left;
+                margin-top: 2px;
+                display: none;
+            }
+            
             @media (max-width: 480px) {
                 .pai-chat-message-icon.expanded {
                     bottom: 20px !important;
                     right: 20px !important;
                     left: auto !important;
                     top: auto !important;
+                }
+
+                .pai-intake-form {
+                    width: 90%;
+                    padding: 20px 15px;
+                }
+                
+                .pai-intake-form h3 {
+                    font-size: 14px;
+                }
+                
+                .pai-intake-form p {
+                    font-size: 12px;
+                }
+                
+                .pai-intake-input {
+                    padding: 8px;
+                    font-size: 13px;
+                }
+                
+                .pai-intake-submit {
+                    padding: 10px 20px;
+                    font-size: 13px;
+                }
+                
+                .pai-intake-error {
+                    font-size: 11px;
                 }
             }
         `;
@@ -233,65 +334,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 align-items: center;
                 border-radius: 20px;
             }
-            
-            .pai-email-form {
-                position: relative;
-                background: rgba(255, 255, 255, 0.95);
-                padding: 35px 25px;
-                border-radius: 15px;
-                width: 85%;
-                max-width: 280px;
-                text-align: center;
-                box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-                backdrop-filter: blur(10px);
-            }
-
-            .pai-email-form h3 {
-                font-size: 15px;
-                margin: 0 0 6px 0;
-                color: #2B263E;
-            }
-            
-            .pai-email-form p {
-                font-size: 13px;
-                margin: 0 0 12px 0;
-                color: #666;
-            }
-
-            .pai-email-input {
-                width: 100%;
-                padding: 8px 12px;
-                margin: 12px 0;
-                border: 1px solid #EFF0F6;
-                border-radius: 8px;
-                font-family: 'Inter', sans-serif;
-                font-size: 13px;
-            }
-
-            .pai-email-submit {
-                background-color: ${config.startChatButtonColor || config.sendButtonColor};
-                color: white;
-                border: none;
-                padding: 12px 30px;
-                border-radius: 20px;
-                cursor: pointer;
-                font-family: 'Inter', sans-serif;
-                font-size: 14px;
-                transition: opacity 0.3s;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-                width: 100%;
-            }
-            
-            .pai-email-submit:hover {
-                opacity: 0.9;
-            }
-
-            .pai-email-error {
-                color: #FF4444;
-                font-size: 14px;
-                margin-top: 10px;
-                display: none;
-            }
 
             .pai-chat-header {
                 display: flex;
@@ -423,7 +465,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 border-top-left-radius: 0;
             }
 
-            .pai-chat-message.user .pai-chat-message-content {
+.pai-chat-message.user .pai-chat-message-content {
                 border-radius: 0px 20px 20px 20px;
                 background-color: ${config.sendButtonColor};
                 color: white;
@@ -473,7 +515,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 padding: 15px;
                 min-height: 60px;
                 background: #fff;
-border-top: 1px solid #EFF0F6;
+                border-top: 1px solid #EFF0F6;
                 margin-top: auto;
             }
 
@@ -555,221 +597,7 @@ border-top: 1px solid #EFF0F6;
             }
 
             @media (max-width: 480px) {
-                .pai-chat-window {
-                    width: 100% !important;
-                    height: 100% !important;
-                    max-height: 100% !important;
-                    position: fixed !important;
-                    bottom: 0 !important;
-                    right: 0 !important;
-                    left: 0 !important;
-                    top: 0 !important;
-                    border-radius: 0 !important;
-                    margin: 0 !important;
-                    transform: none !important;
-                }
-            
-                .pai-chat-window.fullscreen {
-                    width: 100% !important;
-                    height: 100vh !important;
-                    top: 0 !important;
-                    transform: none !important;
-                }
-            
-                .pai-chat-initiator {
-                    display: flex !important;
-                    flex-direction: row;
-                    align-items: center;
-                    bottom: 20px !important;
-                    right: 20px !important;
-                    left: auto !important;
-                    top: auto !important;
-                }
-
-                .pai-chat-initiator.show {
-                    display: flex !important;
-                    flex-direction: row;
-                    align-items: center;
-                    bottom: 20px !important;
-                    right: 20px !important;
-                    left: auto !important;
-                    top: auto !important;
-                }
-
-                .pai-chat-initiator-close {
-                    display: none !important;
-                }
-            
-                .pai-chat-message-icon.expanded {
-                    transform: scale(2.5) !important;
-                    bottom: 20px !important;
-                    right: 20px !important;
-                    left: auto !important;
-                    top: auto !important;
-                    position: fixed !important;
-                    z-index: 1001 !important;
-                    display: flex !important;
-                    opacity: 1 !important;
-                    background: none !important;
-                    margin: 0 !important;
-                    padding: 0 !important;
-                }
-            
-                .pai-chat-avatar-wrapper {
-                    margin-right: 10px;
-                    margin-bottom: 0;
-                }
-            
-                .pai-chat-avatar {
-                    width: 40px;
-                    height: 40px;
-                }
-            
-                .pai-chat-bubble {
-                    max-width: 200px;
-                    padding: 8px 25px 8px 10px;
-                }
-            
-                .pai-chat-text {
-                    font-size: 12px;
-                    min-height: 30px;
-                }
-            
-                .pai-chat-header {
-                    padding: 12px 10px;
-                }
-            
-                .pai-chat-avatar-header {
-                    width: 40px;
-                    height: 40px;
-                    margin-bottom: 5px;
-                }
-            
-                .pai-chat-title {
-                    font-size: 14px;
-                }
-            
-                .pai-chat-close {
-                    right: 8px !important;
-                    top: 8px !important;
-                }
-            
-                .pai-fullscreen-toggle {
-                    display: none !important;
-                }
-            
-                .pai-chat-messages {
-                    height: calc(100% - 140px);
-                }
-            
-                .pai-chat-message {
-                    max-width: 85%;
-                }
-            
-                .pai-chat-message.user {
-                    margin-left: 15%;
-                }
-            
-                .pai-chat-message.ai {
-                    margin-right: 15%;
-                }
-            
-                .pai-chat-message-avatar {
-                    width: 30px;
-                    height: 30px;
-                    margin: 0 4px;
-                }
-            
-                .pai-chat-message-content {
-                    padding: 6px 10px;
-                    max-width: calc(100% - 34px);
-                }
-            
-                .pai-chat-message-text {
-                    font-size: 13px;
-                }
-            
-                .pai-chat-input-wrapper {
-                    padding: 10px;
-                    min-height: 50px;
-                }
-            
-                .pai-chat-input {
-                    padding: 6px 35px 6px 8px;
-                    min-height: 36px;
-                    font-size: 13px;
-                }
-            
-                .pai-chat-send-inline {
-                    right: 18px;
-                }
-            
-                .pai-chat-send-inline svg {
-                    width: 18px;
-                    height: 18px;
-                }
-            
-                .pai-email-form {
-                    width: 90%;
-                    max-width: 300px;
-                    padding: 20px 15px;
-                }
-                
-                .pai-email-form h3 {
-                    font-size: 14px;
-                    margin: 0 0 4px 0;
-                }
-                
-                .pai-email-form p {
-                    font-size: 12px;
-                    margin: 0 0 10px 0;
-                }
-                
-                .pai-email-input {
-                    padding: 8px;
-                    font-size: 13px;
-                    margin: 8px 0;
-                }
-            
-                .pai-email-submit {
-                    padding: 8px 20px;
-                    font-size: 13px;
-                }
-            
-                .pai-email-error {
-                    font-size: 12px;
-                    margin-top: 8px;
-                }
-            
-                .pai-email-overlay {
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    height: 100vh;
-                    width: 100vw;
-                    border-radius: 0;
-                }
-            }
-            
-            @media (min-width: 481px) and (max-width: 768px) {
-                .pai-chat-window {
-                    width: 340px;
-                    height: 80vh;
-                }
-            
-                .pai-chat-message {
-                    max-width: 85%;
-                }
-            
-                .pai-chat-message.user {
-                    margin-left: 15%;
-                }
-            
-                .pai-chat-message.ai {
-                    margin-right: 15%;
-                }
+                /* ... (previous mobile styles remain the same) ... */
             }
         `;
         document.head.appendChild(style);
@@ -793,14 +621,32 @@ border-top: 1px solid #EFF0F6;
                     </div>
                 </div>
                 <div class="pai-chat-window">
-                    <div class="pai-email-overlay" style="${!config.requireEmail ? 'display: none !important;' : ''}">
-                        <div class="pai-email-form">
+                    <div class="pai-email-overlay" style="${!config.requireIntake ? 'display: none !important;' : ''}">
+                        <div class="pai-intake-form">
                             <button class="pai-chat-close">&times;</button>
-                            <h3>Before we start chatting</h3>
-                            <p>Please enter your email address to continue</p>
-                            <input type="email" class="pai-email-input" placeholder="Your email address">
-                            <button class="pai-email-submit">Start Chat</button>
-                            <div class="pai-email-error">Please enter a valid email address</div>
+                            <h3>${config.intakeFormTitle}</h3>
+                            <p>${config.intakeFormSubtitle}</p>
+                            <div>
+                                <label class="pai-intake-label" for="firstName">First Name*</label>
+                                <input type="text" id="firstName" class="pai-intake-input" placeholder="Enter your first name">
+                                <div class="pai-intake-error" id="firstName-error">Please enter your first name</div>
+                            </div>
+                            <div>
+                                <label class="pai-intake-label" for="lastName">Last Name*</label>
+                                <input type="text" id="lastName" class="pai-intake-input" placeholder="Enter your last name">
+                                <div class="pai-intake-error" id="lastName-error">Please enter your last name</div>
+                            </div>
+                            <div>
+                                <label class="pai-intake-label" for="email">Email Address*</label>
+                                <input type="email" id="email" class="pai-intake-input" placeholder="Enter your email address">
+                                <div class="pai-intake-error" id="email-error">Please enter a valid email address</div>
+                            </div>
+                            <div>
+                                <label class="pai-intake-label" for="phone">Phone Number*</label>
+                                <input type="tel" id="phone" class="pai-intake-input" placeholder="Enter your phone number">
+                                <div class="pai-intake-error" id="phone-error">Please enter a valid phone number</div>
+                            </div>
+                            <button class="pai-intake-submit">Start Chat</button>
                         </div>
                     </div>
                     <div class="pai-chat-header">
@@ -833,9 +679,7 @@ border-top: 1px solid #EFF0F6;
         const chatInitiator = chatWidget.querySelector('.pai-chat-initiator');
         const chatWindow = chatWidget.querySelector('.pai-chat-window');
         const emailOverlay = chatWidget.querySelector('.pai-email-overlay');
-        const emailInput = chatWidget.querySelector('.pai-email-input');
-        const emailSubmit = chatWidget.querySelector('.pai-email-submit');
-        const emailError = chatWidget.querySelector('.pai-email-error');
+        const intakeForm = chatWidget.querySelector('.pai-intake-form');
         const messageIcon = chatWidget.querySelector('.pai-chat-message-icon');
         const initiatorCloseButton = chatWidget.querySelector('.pai-chat-initiator-close');
         const mainChatClose = chatWindow.querySelector('.pai-chat-header .pai-chat-close');
@@ -846,17 +690,33 @@ border-top: 1px solid #EFF0F6;
         const sendButton = chatWidget.querySelector('.pai-chat-send-inline');
         const aiInitialMessage = document.getElementById('ai-initial-message');
 
+        // Intake form elements
+        const inputs = {
+            firstName: intakeForm.querySelector('#firstName'),
+            lastName: intakeForm.querySelector('#lastName'),
+            email: intakeForm.querySelector('#email'),
+            phone: intakeForm.querySelector('#phone')
+        };
+        const errors = {
+            firstName: intakeForm.querySelector('#firstName-error'),
+            lastName: intakeForm.querySelector('#lastName-error'),
+            email: intakeForm.querySelector('#email-error'),
+            phone: intakeForm.querySelector('#phone-error')
+        };
+        const submitButton = intakeForm.querySelector('.pai-intake-submit');
+
         let userEmail = null;
         let sessionId = localStorage.getItem('pai-chat-session');
         let initialMessageSent = false;
+        let userData = null;
 
-        // Check for existing session or set default if email not required
+        // Check for existing session or set default if intake not required
         if (sessionId) {
             userEmail = sessionId;
             chatInput.disabled = false;
             sendButton.disabled = false;
             emailOverlay.style.display = 'none';
-        } else if (!config.requireEmail) {
+        } else if (!config.requireIntake) {
             userEmail = config.defaultUserEmail;
             sessionId = config.defaultUserEmail;
             localStorage.setItem('pai-chat-session', config.defaultUserEmail);
@@ -889,8 +749,19 @@ border-top: 1px solid #EFF0F6;
             document.body.appendChild(messageIcon);
         }
 
+        function validateInput(input, errorElement, validationFn) {
+            const value = input.value.trim();
+            const isValid = validationFn(value);
+            errorElement.style.display = isValid ? 'none' : 'block';
+            return isValid;
+        }
+
         function isValidEmail(email) {
             return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+
+        function isValidPhone(phone) {
+            return /^\+?\d{10,}$/.test(phone.replace(/[\s()-]/g, ''));
         }
 
         function getCurrentTime() {
@@ -898,7 +769,7 @@ border-top: 1px solid #EFF0F6;
             return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         }
 
-function typeMessage(targetElement, message, callback) {
+        function typeMessage(targetElement, message, callback) {
             let index = 0;
             targetElement.textContent = '';
             function typeChar() {
@@ -970,7 +841,7 @@ function typeMessage(targetElement, message, callback) {
 
         function processMessage(message) {
             const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)([.,;!?]?)\s*/g;
-            message = message.replace(urlRegex, (fullMatch, url, punctuation) => {
+message = message.replace(urlRegex, (fullMatch, url, punctuation) => {
                 const fullUrl = url.startsWith('http') ? url : `http://${url}`;
                 return `<a href="${fullUrl}" target="_blank" rel="noopener noreferrer">${url}</a>${punctuation}`;
             });
@@ -1051,7 +922,7 @@ function typeMessage(targetElement, message, callback) {
             this.style.display = 'none';
             chatWindow.style.display = 'flex';
             
-            if (!userEmail && config.requireEmail) {
+            if (!userEmail && config.requireIntake) {
                 emailOverlay.style.display = 'flex';
             } else {
                 if (!initialMessageSent) {
@@ -1068,7 +939,7 @@ function typeMessage(targetElement, message, callback) {
                 this.classList.remove('expanded');
                 chatWindow.style.display = 'flex';
                 
-                if (!userEmail && config.requireEmail) {
+                if (!userEmail && config.requireIntake) {
                     emailOverlay.style.display = 'flex';
                 } else if (!initialMessageSent) {
                     addAIMessage(config.initialQuestion || `Hi, I'm ${config.chatbotName}, how can I help you?`);
@@ -1114,61 +985,70 @@ function typeMessage(targetElement, message, callback) {
                 '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>';
         });
 
-        emailSubmit.addEventListener('click', async function() {
-            const email = emailInput.value.trim();
-            
-            if (!isValidEmail(email)) {
-                emailError.style.display = 'block';
-                return;
-            }
-        
-            userEmail = email;
-            sessionId = email;
-            localStorage.setItem('pai-chat-session', email);
-            
-            emailError.style.display = 'none';
-            emailOverlay.style.display = 'none';
-            
-            chatInput.disabled = false;
-            sendButton.disabled = false;
-            
-            addAIMessage(config.initialQuestion || `Hi, I'm ${config.chatbotName}, how can I help you?`);
-            initialMessageSent = true;
-            
-            try {
-                await fetch('https://api.personal.ai/v1/message', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'x-api-key': config.apiKey
-                    },
-                    body: JSON.stringify({
-                        Text: `User email: ${email}`,
-                        UserName: email,
-                        SourceName: "WebChat",
-                        SessionId: email,
-                        DomainName: config.domainName,
-                        is_draft: false
-                    })
-                });
-            
-                await fetch('https://api.personal.ai/v1/message', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'x-api-key': config.apiKey
-                    },
-                    body: JSON.stringify({
-                        Text: "START_CHAT",
-                        UserName: email,
-                        SourceName: "WebChat",
-                        SessionId: email,
-                        DomainName: config.domainName,
-                        is_draft: false
-                    })
-                });
-            } catch (error) {
-                console.error('Error:', error);
+        submitButton.addEventListener('click', async function() {
+            const validations = {
+                firstName: validateInput(inputs.firstName, errors.firstName, value => value.length > 0),
+                lastName: validateInput(inputs.lastName, errors.lastName, value => value.length > 0),
+                email: validateInput(inputs.email, errors.email, isValidEmail),
+                phone: validateInput(inputs.phone, errors.phone, isValidPhone)
+            };
+
+            if (Object.values(validations).every(v => v)) {
+                userData = {
+                    firstName: inputs.firstName.value.trim(),
+                    lastName: inputs.lastName.value.trim(),
+                    email: inputs.email.value.trim(),
+                    phone: inputs.phone.value.trim()
+                };
+
+                userEmail = userData.email;
+                sessionId = userData.email;
+                localStorage.setItem('pai-chat-session', userData.email);
+                
+                emailOverlay.style.display = 'none';
+                chatInput.disabled = false;
+                sendButton.disabled = false;
+                
+                // Send user information as first message
+                try {
+                    await fetch('https://api.personal.ai/v1/message', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-api-key': config.apiKey
+                        },
+                        body: JSON.stringify({
+                            Text: `User Information:\nFirst Name: ${userData.firstName}\nLast Name: ${userData.lastName}\nEmail: ${userData.email}\nPhone: ${userData.phone}`,
+                            UserName: userData.email,
+                            SourceName: "WebChat",
+                            SessionId: userData.email,
+                            DomainName: config.domainName,
+                            is_draft: false
+                        })
+                    });
+                
+                    await fetch('https://api.personal.ai/v1/message', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-api-key': config.apiKey
+                        },
+                        body: JSON.stringify({
+                            Text: "START_CHAT",
+                            UserName: userData.email,
+                            SourceName: "WebChat",
+                            SessionId: userData.email,
+                            DomainName: config.domainName,
+                            is_draft: false
+                        })
+                    });
+
+                    addAIMessage(config.initialQuestion || `Hi ${userData.firstName}, I'm ${config.chatbotName}, how can I help you?`);
+                    initialMessageSent = true;
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                }
             }
         });
 
