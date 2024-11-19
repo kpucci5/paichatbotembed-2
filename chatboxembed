@@ -985,72 +985,74 @@ message = message.replace(urlRegex, (fullMatch, url, punctuation) => {
                 '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>';
         });
 
-        submitButton.addEventListener('click', async function() {
-            const validations = {
-                firstName: validateInput(inputs.firstName, errors.firstName, value => value.length > 0),
-                lastName: validateInput(inputs.lastName, errors.lastName, value => value.length > 0),
-                email: validateInput(inputs.email, errors.email, isValidEmail),
-                phone: validateInput(inputs.phone, errors.phone, isValidPhone)
-            };
+submitButton.addEventListener('click', async function() {
+    const validations = {
+        firstName: validateInput(inputs.firstName, errors.firstName, value => value.length > 0),
+        lastName: validateInput(inputs.lastName, errors.lastName, value => value.length > 0),
+        email: validateInput(inputs.email, errors.email, isValidEmail),
+        phone: validateInput(inputs.phone, errors.phone, isValidPhone)
+    };
 
-            if (Object.values(validations).every(v => v)) {
-                userData = {
-                    firstName: inputs.firstName.value.trim(),
-                    lastName: inputs.lastName.value.trim(),
-                    email: inputs.email.value.trim(),
-                    phone: inputs.phone.value.trim()
-                };
+    if (Object.values(validations).every(v => v)) {
+        userData = {
+            firstName: inputs.firstName.value.trim(),
+            lastName: inputs.lastName.value.trim(),
+            email: inputs.email.value.trim(),
+            phone: inputs.phone.value.trim()
+        };
 
-                userEmail = userData.email;
-                sessionId = userData.email;
-                localStorage.setItem('pai-chat-session', userData.email);
-                
-                emailOverlay.style.display = 'none';
-                chatInput.disabled = false;
-                sendButton.disabled = false;
-                
-                // Send user information as first message
-                try {
-                    await fetch('https://api.personal.ai/v1/message', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'x-api-key': config.apiKey
-                        },
-                        body: JSON.stringify({
-                            Text: `User Information:\nFirst Name: ${userData.firstName}\nLast Name: ${userData.lastName}\nEmail: ${userData.email}\nPhone: ${userData.phone}`,
-                            UserName: userData.email,
-                            SourceName: "WebChat",
-                            SessionId: userData.email,
-                            DomainName: config.domainName,
-                            is_draft: false
-                        })
-                    });
-                
-                    await fetch('https://api.personal.ai/v1/message', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'x-api-key': config.apiKey
-                        },
-                        body: JSON.stringify({
-                            Text: "START_CHAT",
-                            UserName: userData.email,
-                            SourceName: "WebChat",
-                            SessionId: userData.email,
-                            DomainName: config.domainName,
-                            is_draft: false
-                        })
-                    });
+        userEmail = userData.email;
+        sessionId = userData.email;
+        localStorage.setItem('pai-chat-session', userData.email);
+        
+        // Hide overlay and enable chat input immediately
+        emailOverlay.style.display = 'none';
+        chatInput.disabled = false;
+        sendButton.disabled = false;
 
-                    addAIMessage(config.initialQuestion || `Hi ${userData.firstName}, I'm ${config.chatbotName}, how can I help you?`);
-                    initialMessageSent = true;
-                    
-                } catch (error) {
-                    console.error('Error:', error);
-                }
-            }
-        });
+        // Show initial message immediately
+        initialMessageSent = true;
+        addAIMessage(config.initialQuestion || `Hi ${userData.firstName}, I'm ${config.chatbotName}, how can I help you?`);
+        
+        try {
+            // Send user information in the background
+            await Promise.all([
+                fetch('https://api.personal.ai/v1/message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': config.apiKey
+                    },
+                    body: JSON.stringify({
+                        Text: `User Information:\nFirst Name: ${userData.firstName}\nLast Name: ${userData.lastName}\nEmail: ${userData.email}\nPhone: ${userData.phone}`,
+                        UserName: userData.email,
+                        SourceName: "WebChat",
+                        SessionId: userData.email,
+                        DomainName: config.domainName,
+                        is_draft: false
+                    })
+                }),
+                fetch('https://api.personal.ai/v1/message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': config.apiKey
+                    },
+                    body: JSON.stringify({
+                        Text: "START_CHAT",
+                        UserName: userData.email,
+                        SourceName: "WebChat",
+                        SessionId: userData.email,
+                        DomainName: config.domainName,
+                        is_draft: false
+                    })
+                })
+            ]);
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+});
 
         chatInput.addEventListener('keypress', function(event) {
             if (event.key === 'Enter' && !event.shiftKey) {
