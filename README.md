@@ -85,37 +85,12 @@ Major CSS classes for styling:
 - `.pai-chat-input`: Input field
 - `.pai-chat-header`: Chat header
 
-### Mobile Responsiveness
-The widget automatically adjusts for mobile devices:
-- Full-width display on small screens
-- Optimized touch targets
-- Responsive font sizes
-- Bottom-right positioning
-
 ## Browser Support
 - Chrome (latest)
 - Firefox (latest)
 - Safari (latest)
 - Edge (latest)
 - Mobile browsers
-
-## Error Handling
-- API connection errors
-- Form validation
-- Session management
-- Network issues
-
-## Security Features
-- HTTPS endpoint usage
-- Input sanitization
-- Session validation
-- Secure data transmission
-
-## Performance
-- Lazy loading of resources
-- Optimized animations
-- Efficient DOM updates
-- Memory leak prevention
 
 ## Troubleshooting
 Common issues and solutions:
