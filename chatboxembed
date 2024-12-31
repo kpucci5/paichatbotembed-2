@@ -595,10 +595,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 50% { transform: translateY(-5px); }
                 100% { transform: translateY(0px); }
             }
-
-            @media (max-width: 480px) {
-                /* ... (previous mobile styles remain the same) ... */
-            }
         `;
         document.head.appendChild(style);
 
